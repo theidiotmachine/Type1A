@@ -4,14 +4,12 @@ import com.jme3.app.{FlyCamAppState, SimpleApplication}
 import com.jme3.niftygui.NiftyJmeDisplay
 import com.jme3.system.AppSettings
 import de.lessvoid.nifty.Nifty
-import game.GameState
 import typeIa.gui.controls.{DynTab, DynTabPane, IconButton, StarPanel}
 import typeIa.gui.{MainScreen, StartScreen}
 
 
 class TypeIA extends SimpleApplication {
   var mainScreen: MainScreen = null
-  var gameState: GameState = new GameState
   def simpleInitApp(): Unit = {
 
     val niftyDisplay: NiftyJmeDisplay = new NiftyJmeDisplay(assetManager, inputManager, audioRenderer, guiViewPort)

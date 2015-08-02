@@ -187,7 +187,7 @@ class MainScreen(val app: TypeIA) extends AbstractAppState with ScreenController
       val geom = collisionResult.getGeometry
       //val sbbc = geom.getControl(classOf[StarBillboardControl])
       val go = geom.getUserData[GalacticObject]("GalacticObject")
-      val locpc = go.galacticLoc(app.gameState.time)
+      val locpc = go.galacticLoc(0)
 
       gotoFarStarView(go, locpc, spinnyCameraManager.camXRot, spinnyCameraManager.camYRot)
       //val currentTab = mainScreen.tabset.getCurrentTab
