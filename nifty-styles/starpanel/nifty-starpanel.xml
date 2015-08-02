@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nifty-styles>
+    <!-- +++++++++++++++++++++++++++++++++++++ -->
+    <!-- style for the button background panel -->
+    <!-- +++++++++++++++++++++++++++++++++++++ -->
+    <style id="nifty-starpanel#panel">
+        <attributes visibleToMouse="true"/>
+    </style>
+
+</nifty-styles>

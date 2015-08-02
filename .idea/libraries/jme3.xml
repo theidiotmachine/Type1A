@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="jme3">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/../../JME3/lib" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../../JME3/source" />
+    </SOURCES>
+    <excluded>
+      <root url="jar://$PROJECT_DIR$/../../JME3/lib/nifty-style-black.jar!/" />
+    </excluded>
+    <jarDirectory url="file://$PROJECT_DIR$/../../JME3/lib" recursive="false" />
+  </library>
+</component>
