@@ -65,5 +65,5 @@ object GTypeMainSequence extends StarType{
    */
   override def colorMax: ColorRGBA = StarType.genColor(0xf1, 0xf5, 0xf5)
 
-  override def name: String = "type G star"
+  override def name: String = "yellow dwarf (type G main sequence star)"
 }

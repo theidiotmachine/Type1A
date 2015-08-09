@@ -63,5 +63,5 @@ object FTypeMainSequence extends StarType{
    */
   override def colorMax: ColorRGBA = StarType.genColor(0xe1, 0xe7, 0xff)
 
-  override def name: String = "type F star"
+  override def name: String = "type F main sequence star"
 }

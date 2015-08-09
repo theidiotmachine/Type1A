@@ -63,5 +63,5 @@ object KTypeMainSequence extends StarType{
    */
   override def colorMax: ColorRGBA = StarType.genColor(0xff, 0xe3, 0xc6)
 
-  override def name: String = "type K star"
+  override def name: String = "orange dwarf (type K main sequence star)"
 }
