@@ -5,7 +5,7 @@ import com.jme3.math.ColorRGBA
 /**
  * A type main sequence star.
  */
-object ATypeMainSequence extends StarType{
+object ATypeMainSequence extends MainSequence{
   /**
    * The likelihood of a star being this type.
    *

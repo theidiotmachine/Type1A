@@ -5,12 +5,11 @@ import com.jme3.export.{JmeExporter, JmeImporter, Savable}
 /**
  * A star, for the purposes of this, is the largest body in a system; so we include brown dwarfs
  */
-class PrimaryStar(val name: String, val galacticLoc: Locpc, val starData: StarData,
+class PrimaryStar(val name: String, val loc: Loc, val starData: StarData,
                   o: => Array[Satellite])
-  extends Primary with GalacticObject with SolarSystemObject with Star
+  extends Primary with LocatedObject with Star
   with Savable{
   lazy val satellites = o
-  val solarSystemLoc = new Locau(0, 0, 0)
 
   override def write(ex: JmeExporter): Unit = ???
 
@@ -20,5 +19,5 @@ class PrimaryStar(val name: String, val galacticLoc: Locpc, val starData: StarDa
     name + " - " + starData.tip
   }
 
-  override def galacticLoc(time: Double): Locpc = galacticLoc
+  override def loc(time: Double): Loc = loc
 }

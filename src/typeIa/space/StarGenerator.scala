@@ -100,44 +100,40 @@ object StarGenerator {
     generateNameGibberish(r)
   }
 
-  def generatePrimaryStar(loc: Locpc, r: Random): GalacticObject = {
+  def generatePrimaryStar(loc: Loc, r: Random): LocatedObject = {
     val starType = StarGenerator.generateLoneStarType(r)
     val starData = StarGenerator.generateStarData(r, starType)
     new PrimaryStar(generateName(r), loc, starData, Array[Satellite]())
   }
 
-  def generatePDMS(loc: Locpc, r: Random): GalacticObject= {
+  def generatePDMS(loc: Loc, r: Random): LocatedObject= {
     val starType1 = StarGenerator.generateLoneStarType(r)
     val starType2 = if(r.nextDouble() > 0.8)
       starType1
     else
       StarGenerator.generateLoneStarType(r)
 
-    //I made this up based on
-    //www.astronomycafe.net/qadir/q333.html
-
-    //var dist = /*r.nextDouble() * */r.nextDouble() * 2500
-
-    //proxima centauri is about this dist from the Alpha Centauri binary, which seems a good upper limit
-    var dist = r.nextDouble() * 15000
+    //proxima centauri is about this dist from the Alpha Centauri binary, which seems a good upper limit. It means
+    //my binarys are a bit further than reality
+    var distau = r.nextDouble() * 15000
     val starData1 = StarGenerator.generateStarData(r, starType1)
     val starData2 = StarGenerator.generateStarData(r, starType2)
     var distant = false
     while(distant) {
       //from the wiki page on roche lobes
-      val rocheLobe1 = 0.38 + 0.2 * scala.math.log10(starData1.mass / starData2.mass) * dist
-      val rocheLobe2 = 0.38 + 0.2 * scala.math.log10(starData2.mass / starData1.mass) * dist
+      val rocheLobe1 = 0.38 + 0.2 * scala.math.log10(starData1.mass / starData2.mass) * distau
+      val rocheLobe2 = 0.38 + 0.2 * scala.math.log10(starData2.mass / starData1.mass) * distau
 
       if(starData1.radius > rocheLobe1 || starData2.radius > rocheLobe2) {
-        dist *= 1 + r.nextDouble()
+        distau *= 1 + r.nextDouble()
       } else
         distant = true
     }
     //from voyager.egglescliffe.org.uk/physics/gravatiation/binary/binary.html
     val totalMass = starData1.mass + starData2.mass
-    val orbitalDist1 = starData2.mass* dist / totalMass
-    val orbitalDist2 = starData1.mass* dist / totalMass
-    val orbitVector = Utils.randomUnitLocpc(r)
+    val orbitalDist1 = starData2.mass* distau / totalMass
+    val orbitalDist2 = starData1.mass* distau / totalMass
+    val orbitVector = Utils.randomUnitVector(r)
     val name = generateName(r)
     new PrimaryDetachedMultipleStar(name, loc, orbitVector,
       new MultipleStar(name + " A", starData1, orbitalDist1, loc, orbitVector, true),
@@ -145,9 +141,8 @@ object StarGenerator {
       new Detatched)
   }
 
-  def generateStarSystem(r: Random, spaceSize: Double): GalacticObject = {
-    val loc = new Locpc((r.nextDouble() - 0.5) * spaceSize, (r.nextDouble() - 0.5) * spaceSize,
-    (r.nextDouble() - 0.5) * spaceSize)
+  def generateStarSystem(r: Random, spaceSize: Double): LocatedObject = {
+    val loc = Loc.randomLocCubepc(r, spaceSize)
     val numStars = numStarsInSystem(r)
     numStars match{
       case 1 =>

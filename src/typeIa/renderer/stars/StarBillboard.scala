@@ -10,13 +10,13 @@ import com.jme3.scene.control.BillboardControl
 import com.jme3.scene.shape.Quad
 import com.jme3.scene.{Geometry, Node, Spatial}
 import typeIa.renderer.Renderer
-import typeIa.space.{GalacticObject, PrimaryDetachedMultipleStar, PrimaryStar}
+import typeIa.space.{LocatedObject, PrimaryDetachedMultipleStar, PrimaryStar}
 /**
  * Created by tim on 06/04/15.
  */
 object StarBillboard {
 
-  def createQuad(go: GalacticObject, locgfx: Vector3f, radius: Double): Geometry = {
+  def createQuad(go: LocatedObject, locgfx: Vector3f, radius: Double): Geometry = {
     val size = math.min(math.max(radius/10, 0.05), 0.2).toFloat
     val quad = new Quad(size, size)
     val geom = new Geometry(go.name, quad)
@@ -48,7 +48,7 @@ object StarBillboard {
     val color = ps.starData.color
     val luminosity = ps.starData.luminosity
     val radius = ps.starData.radius
-    val loc = ps.galacticLoc
+    val loc = ps.loc
     val geom = createQuad(ps, Renderer.getNearLocGfx(loc), radius)
     val mat = createMaterial(assetManager, color)
     geom.setMaterial(mat)
@@ -65,18 +65,18 @@ object StarBillboard {
       new StarBillboardControlDatum(
         pdms,
         pdms.getMergedLuminosity, Some(sep), None, "Textures/star1.png", assetManager,
-        pdms.getMergedColor.clone(), pdms.galacticLoc, pdms.getMergedRadius),
+        pdms.getMergedColor.clone(), pdms.loc(0), pdms.getMergedRadius),
       new StarBillboardControlDatum(
         pdms.a,
         pdms.a.getLuminosity, None, Some(sep), "Textures/star1.png", assetManager,
-        pdms.a.getColor.clone(), pdms.a.galacticLoc(0), pdms.a.getRadius),
+        pdms.a.getColor.clone(), pdms.a.loc(0), pdms.a.getRadius),
       new StarBillboardControlDatum(
         pdms.b,
         pdms.b.getLuminosity, None, Some(sep), "Textures/star1.png", assetManager,
-        pdms.b.getColor.clone(), pdms.b.galacticLoc(0), pdms.b.getRadius)
+        pdms.b.getColor.clone(), pdms.b.loc(0), pdms.b.getRadius)
     )
 
-    out.addControl(new StarMultiMasterControl(pdms.galacticLoc, kids, cam))
+    out.addControl(new StarMultiMasterControl(pdms.loc, kids, cam))
     out
   }
 }

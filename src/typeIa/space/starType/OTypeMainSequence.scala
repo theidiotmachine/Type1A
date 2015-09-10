@@ -4,8 +4,9 @@ import com.jme3.math.ColorRGBA
 
 /** O-Type main sequence.
  *
+  * I have resigned myself to never seeing one of these in Type1A. I bet they are pretty impressive
  */
-object OTypeMainSequence extends StarType {
+object OTypeMainSequence extends MainSequence {
 
   /**
    * From wiki: These stars are rare; it is estimated that there are no more than 20,000 in the entire Milky Way.

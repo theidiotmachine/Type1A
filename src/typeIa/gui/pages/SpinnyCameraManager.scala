@@ -1,15 +1,15 @@
 package typeIa.gui.pages
 
-import com.jme3.math.{Vector3f, Matrix4f}
+import com.jme3.math.{Matrix4f, Vector3f}
 import com.jme3.renderer.Camera
 import typeIa.gui.MainScreen
 import typeIa.renderer.Renderer
-import typeIa.space.Locpc
+import typeIa.space.Loc
 
 /**
  * Trait for holding spinny camera functionality
  */
-class SpinnyCameraManager(var camLookAt: Locpc, var camDistPc: Double, var camMaxDistPc: Double) {
+class SpinnyCameraManager(var camLookAt: Loc, var camDistPc: Double, var camMaxDistPc: Double) {
   var camYRot: Float = 0
   var camXRot: Float = 0
 
@@ -20,8 +20,9 @@ class SpinnyCameraManager(var camLookAt: Locpc, var camDistPc: Double, var camMa
 
     val relPosPc = mat.mult(new Vector3f(0, 0, camDistPc.asInstanceOf[Float]))
 
-    cam.setLocation(Renderer.getNearLocGfx(Locpc(camLookAt.x + relPosPc.x,
-      camLookAt.y + relPosPc.y, camLookAt.z + relPosPc.z)))
+    //cam.setLocation(Renderer.getNearLocGfx(Loc(camLookAt.xpc + relPosPc.x,
+      //camLookAt.ypc + relPosPc.y, camLookAt.zpc + relPosPc.z)))
+    cam.setLocation(Renderer.getNearLocGfx(camLookAt.pluspc(relPosPc.x, relPosPc.y, relPosPc.z)))
     cam.lookAt(Renderer.getNearLocGfx(camLookAt), new Vector3f(0, 1, 0))
   }
 

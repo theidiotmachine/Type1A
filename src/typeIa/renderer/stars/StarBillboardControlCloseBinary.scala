@@ -6,7 +6,7 @@ package typeIa.renderer.stars
  */
 class StarBillboardControlCloseBinary(val luminosity: Double, val separationDistau: Double) extends StarBillboardControlClose {
   def getCloseAlpha(lpc: Double, lau: Double): Double = {
-    val max = maxDist(separationDistau)
+    val max = maxDistau(separationDistau)
     if(lau > max)
       getDistBasedA(lpc)
     else if(lau > minDist(separationDistau)) {

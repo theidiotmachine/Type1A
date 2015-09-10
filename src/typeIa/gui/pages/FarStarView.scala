@@ -1,14 +1,14 @@
 package typeIa.gui.pages
 
 import typeIa.gui.MainScreen
-import typeIa.space.GalacticObject
+import typeIa.space.LocatedObject
 
 /**
  * A view of a star in the main screen. 'Far' because we don;t see planets
  */
 class FarStarView(val mainScreen: MainScreen) extends Page {
 
-  var go: GalacticObject = null
+  var go: LocatedObject = null
 
   override def defaultPage: PageState = {
     //FIXME needs to be player home world

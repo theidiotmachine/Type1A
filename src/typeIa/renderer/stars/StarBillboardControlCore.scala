@@ -1,7 +1,5 @@
 package typeIa.renderer.stars
 
-import typeIa.renderer.Renderer
-
 /**
  * Created by tim on 18/04/15.
  */
@@ -20,11 +18,12 @@ trait StarBillboardControlCore {
       1.0 - (distPc / totDist)
   }
 
-  protected val maxDistRatio = 150
-  protected val minDistRatio = 120
+  /**
+   * The maximum distance that we will render these at, in au
+   * @param separationDistau The separation dist between the two things
+   * @return an au distance to separate them
+   */
+  protected def maxDistau(separationDistau: Double): Double = separationDistau * 100.0 * 1.1//0.1 * Renderer.gfxScaleau * 1.1
 
-  protected val optDist = 150
-
-  protected def maxDist(separationDistau: Double): Double = separationDistau * optDist * Renderer.gfxScale * 1.1
-  protected def minDist(separationDistau: Double): Double = separationDistau * optDist * Renderer.gfxScale * 0.9
+  protected def minDist(separationDistau: Double): Double = separationDistau * 100.0 * 0.9//* 0.1 * Renderer.gfxScaleau * 0.9
 }

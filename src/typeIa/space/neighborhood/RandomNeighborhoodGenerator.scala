@@ -1,6 +1,6 @@
 package typeIa.space.neighborhood
 
-import typeIa.space.{StarGenerator, GalacticObject}
+import typeIa.space.{StarGenerator, LocatedObject}
 
 import scala.util.Random
 
@@ -9,7 +9,7 @@ import scala.util.Random
  */
 object RandomNeighborhoodGenerator extends NeighborhoodGenerator{
   //@tailrec
-  private def nextStar(r: Random, numStarsLeft: Long, sizePc: Double): List[GalacticObject] = {
+  private def nextStar(r: Random, numStarsLeft: Long, sizePc: Double): List[LocatedObject] = {
     val star = StarGenerator.generateStarSystem(r, sizePc)
 
     if(numStarsLeft == 1)

@@ -19,7 +19,7 @@ class MultipleSubBinary(val name: String, val a: BinaryElem, val b: BinaryElem, 
   /**
    * For rendering. Not sure about this
    */
-  override def galacticLoc(time: Double): Locpc = ???
+  override def loc(time: Double): Loc = ???
 
   /**
    * In solar radii

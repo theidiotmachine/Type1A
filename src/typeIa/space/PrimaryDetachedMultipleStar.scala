@@ -1,6 +1,7 @@
 package typeIa.space
 
 import com.jme3.export.{JmeExporter, JmeImporter, Savable}
+import com.jme3.math.Vector3f
 import typeIa.space.binaryStarType.Detatched
 
 /**
@@ -10,14 +11,14 @@ import typeIa.space.binaryStarType.Detatched
  *
  * @param orbitVector Gives the separation vector from a to b
  */
-class PrimaryDetachedMultipleStar(val name: String, val galacticLoc: Locpc,
-                                  val orbitVector: Locpc,
+class PrimaryDetachedMultipleStar(val name: String, val loc: Loc,
+                                  val orbitVector: Vector3f,
                                   e1: => BinaryElem,
                                   e2: => BinaryElem,
-                                  val binaryStarType: Detatched) extends Binary with GalacticObject with Savable{
+                                  val binaryStarType: Detatched) extends Binary with LocatedObject with Savable{
   lazy val a = e1
   lazy val b = e2
-  val solarSystemLoc = new Locau(0, 0, 0)
+  //val solarSystemLoc = new Locau(0, 0, 0)
 
   /**
    * How far these binary elems are
@@ -32,5 +33,5 @@ class PrimaryDetachedMultipleStar(val name: String, val galacticLoc: Locpc,
     name + " - Multiple system"
   }
 
-  override def galacticLoc(time: Double): Locpc = galacticLoc
+  override def loc(time: Double): Loc = loc
 }

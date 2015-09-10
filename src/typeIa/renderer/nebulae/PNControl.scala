@@ -1,15 +1,15 @@
 package typeIa.renderer.nebulae
 
-import com.jme3.renderer.{ViewPort, RenderManager, Camera}
+import com.jme3.renderer.{Camera, RenderManager, ViewPort}
 import com.jme3.scene.control.AbstractControl
-import typeIa.renderer.Renderer
-import typeIa.space.{Utils, Locpc}
+import typeIa.space.Loc
 
 /**
  * Created by tim on 25/07/15.
  */
-class PNControl(val locpc: Locpc, val cam: Camera) extends AbstractControl{
+class PNControl(val loc: Loc, val cam: Camera) extends AbstractControl{
   override def controlUpdate(tpf: Float): Unit = {
+    /*
     val loc = Renderer.getNearLocGfx(locpc)
     spatial.setLocalTranslation(loc)
 
@@ -21,7 +21,7 @@ class PNControl(val locpc: Locpc, val cam: Camera) extends AbstractControl{
 
     val lpc = offset.length
     val lau = Utils.pcToau(lpc)
-
+*/
 
     /*
     + = l0, * = l1

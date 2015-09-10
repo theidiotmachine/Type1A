@@ -85,12 +85,11 @@ object WhiteDwarf extends StarType{
     //might be useful for planets. Note that the age factor here is 1 - young, 0 = old, which is just because it's
     // convenient
     val ageFactor = r.nextDouble()
-    val lumRange = luminosityMax - luminosityMin
+    val starLuminosity = luminosity(mass) * ageFactor
     val color = new ColorRGBA
     color.interpolate(colorMin, colorMax, ageFactor.toFloat)
-    val sTempRange = surfaceTemperatureMax - surfaceTemperatureMin
-    new StarData(this, mass, (ageFactor * lumRange) + luminosityMin, radius, color,
-      (ageFactor * sTempRange) + surfaceTemperatureMin)
+    new StarData(this, mass, starLuminosity, radius, color,
+      surfaceTemperature(starLuminosity, radius))
   }
 
   override def loneStarPNProb: Double = 0.5

@@ -1,7 +1,7 @@
 package typeIa.gui.pages
 
 import typeIa.gui.MainScreen
-import typeIa.space.Locpc
+import typeIa.space.Loc
 
 trait GalaxyViewController {
   def clickStarPanel(): Unit
@@ -21,7 +21,7 @@ class GalaxyView(val mainScreen: MainScreen) extends Page  {
     mainScreen.spinnyCameraManager.camDistPc = galaxyViewState.camDistPc
     mainScreen.spinnyCameraManager.camXRot = galaxyViewState.camXRot
     mainScreen.spinnyCameraManager.camYRot = galaxyViewState.camYRot
-    mainScreen.spinnyCameraManager.camLookAt = Locpc(0, 0, 0)
+    mainScreen.spinnyCameraManager.camLookAt = Loc.pc(0, 0, 0)
     enter()
   }
 

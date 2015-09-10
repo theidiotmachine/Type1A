@@ -1,6 +1,6 @@
 package typeIa.space.neighborhood
 
-import typeIa.space.{Locpc, StarGenerator, GalacticObject}
+import typeIa.space.{Loc, StarGenerator, LocatedObject}
 
 import scala.util.Random
 
@@ -12,16 +12,17 @@ object PDMSClusterNeighborhoodGenerator extends NeighborhoodGenerator {
     val seed: Long = 100
 
     val r = new Random(seed)
-    new Neighborhood(Array[GalacticObject](
-      /*StarGenerator.generatePDMS(Locpc(0, 0, 0), r),*/
-      StarGenerator.generatePDMS(Locpc(3, 0, 0), r),
-      StarGenerator.generatePrimaryStar(Locpc(0, 0, 0), r)/*,
-      StarGenerator.generatePrimaryStar(Locpc(3, 0, 0), r),
-      StarGenerator.generatePDMS(Locpc(-3, 0, 0), r),
-      StarGenerator.generatePDMS(Locpc(0, 3, 0), r),
-      StarGenerator.generatePDMS(Locpc(0, -3, 0), r),
-      StarGenerator.generatePDMS(Locpc(0, 0, 3), r),
-      StarGenerator.generatePDMS(Locpc(0, 0, -3), r)*/
+    new Neighborhood(Array[LocatedObject](
+      StarGenerator.generatePDMS(Loc.pc(0, 0, 0), r),
+      StarGenerator.generatePDMS(Loc.pc(3, 0, 0), r),
+      //StarGenerator.generatePrimaryStar(Loc.pc(0, 0, 0), r)
+
+      //StarGenerator.generatePrimaryStar(Locpc(3, 0, 0), r),
+      StarGenerator.generatePDMS(Loc.pc(-3, 0, 0), r),
+      StarGenerator.generatePDMS(Loc.pc(0, 3, 0), r),
+      StarGenerator.generatePDMS(Loc.pc(0, -3, 0), r),
+      StarGenerator.generatePDMS(Loc.pc(0, 0, 3), r),
+      StarGenerator.generatePDMS(Loc.pc(0, 0, -3), r)
     ))
   }
 }

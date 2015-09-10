@@ -6,7 +6,7 @@ package typeIa.renderer.stars
 class StarBillboardControlFarBinary(val luminosity: Double, val parentSeparationDistau: Double) extends StarBillboardControlFar{
 
   override def getFarAlpha(lpc: Double, lau: Double): Double = {
-    val max = maxDist(parentSeparationDistau)
+    val max = maxDistau(parentSeparationDistau)
     if (lau > max)
       0
     else if (lau > minDist(parentSeparationDistau)) {

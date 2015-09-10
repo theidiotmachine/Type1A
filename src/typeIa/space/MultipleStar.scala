@@ -1,13 +1,13 @@
 package typeIa.space
 
 import com.jme3.export.{JmeExporter, JmeImporter, Savable}
-import com.jme3.math.ColorRGBA
+import com.jme3.math.{Vector3f, ColorRGBA}
 
 /**
  * A single star in a multiple.
  */
-class MultipleStar(val name: String, val starData: StarData, val orbitRadiusInAu: Double, val systemLoc: Locpc,
-                   val orbitVector: Locpc,
+class MultipleStar(val name: String, val starData: StarData, val orbitRadiusInAu: Double, val systemLoc: Loc,
+                   val orbitVector: Vector3f,//a unit vector
                    a: Boolean) extends BinaryElem with Star with Savable{
   /**
    * The color for a sprite
@@ -22,9 +22,10 @@ class MultipleStar(val name: String, val starData: StarData, val orbitRadiusInAu
   /**
    *
    */
-  override def galacticLoc(time: Double): Locpc = {
+  override def loc(time: Double): Loc = {
     //FIXME do orbits!
-    systemLoc + (orbitVector * Utils.auTopc(if(a)orbitRadiusInAu else -orbitRadiusInAu))
+    systemLoc + Loc.unitAndauLength(orbitVector, if(a)orbitRadiusInAu else -orbitRadiusInAu)//orbitVector.mult(Loc.auTom(if(a)orbitRadiusInAu else -orbitRadiusInAu))
+    //systemLoc + (orbitVector * Loc.auTopc(if(a)orbitRadiusInAu else -orbitRadiusInAu))
   }
   /**
    * In solar radii

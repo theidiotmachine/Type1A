@@ -31,7 +31,7 @@ class MainScreen(val app: TypeIA) extends AbstractAppState with ScreenController
 
   //duped from galaxy view
   private def defaultCamDistPc(clusterCubeSizePc: Double) = clusterCubeSizePc * 3.0
-  val spinnyCameraManager = new SpinnyCameraManager(Locpc(0, 0, 0), defaultCamDistPc(clusterCubeSizePc),
+  val spinnyCameraManager = new SpinnyCameraManager(Loc(0, 0, 0), defaultCamDistPc(clusterCubeSizePc),
     clusterCubeSizePc * 5.0)
 
   private val tabset = new TabSet
@@ -154,7 +154,7 @@ class MainScreen(val app: TypeIA) extends AbstractAppState with ScreenController
     val tipText = if(results.size() > 0) {
       val collisionResult = results.getClosestCollision
       val geom = collisionResult.getGeometry
-      val go = geom.getUserData[GalacticObject]("GalacticObject")
+      val go = geom.getUserData[LocatedObject]("GalacticObject")
       go.tip
     } else
       ""
@@ -186,10 +186,10 @@ class MainScreen(val app: TypeIA) extends AbstractAppState with ScreenController
       val collisionResult = results.getClosestCollision
       val geom = collisionResult.getGeometry
       //val sbbc = geom.getControl(classOf[StarBillboardControl])
-      val go = geom.getUserData[GalacticObject]("GalacticObject")
-      val locpc = go.galacticLoc(0)
+      val go = geom.getUserData[LocatedObject]("GalacticObject")
+      val loc = go.loc(0)
 
-      gotoFarStarView(go, locpc, spinnyCameraManager.camXRot, spinnyCameraManager.camYRot)
+      gotoFarStarView(go, loc, spinnyCameraManager.camXRot, spinnyCameraManager.camYRot)
       //val currentTab = mainScreen.tabset.getCurrentTab
       //currentTab.goto(new FarStarViewState(currentTab.farStarView, 5, locpc, spinnyCameraManager.camXRot, spinnyCameraManager.camYRot))
     }
@@ -208,9 +208,9 @@ class MainScreen(val app: TypeIA) extends AbstractAppState with ScreenController
       forward.disable()
   }
 
-  def gotoFarStarView(go:GalacticObject, locpc: Locpc, camXRot: Float, camYRot: Float): Unit = {
+  def gotoFarStarView(go:LocatedObject, loc: Loc, camXRot: Float, camYRot: Float): Unit = {
     val currentTab = tabset.getCurrentTab
-    currentTab.goto(new FarStarViewState(currentTab.farStarView, go, 5, locpc, camXRot, camYRot))
+    currentTab.goto(new FarStarViewState(currentTab.farStarView, go, 5, loc, camXRot, camYRot))
     setNavigateButtons()
   }
 

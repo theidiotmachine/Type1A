@@ -47,6 +47,27 @@ trait StarType{
    */
   def surfaceTemperatureMax: Double
 
+  def surfaceTemperature(luminosity: Double, radius: Double): Double = {
+    //val massRange = massMax - massMin
+    //val massFrac = (mass - massMin) / massRange
+    //val sTempRange = surfaceTemperatureMax - surfaceTemperatureMin
+    //(massFrac * sTempRange) + surfaceTemperatureMin
+
+    //stefan bolzman (2)
+    //luminosity = 4*pi*radius^2*sbConst*surfaceTemp^4
+    //so
+    //luminosity/(4*pi*radius^2*sbConst) = surfaceTemp^4
+    //luminosity/(4*pi*radius^2*sbConst)^1/4 = surfaceTemp
+
+    val surfaceTemperature = math.pow(luminosity/(4*math.Pi*radius*radius*StarType.StefanBoltzmannConst), 0.25)
+    if(surfaceTemperature > surfaceTemperatureMax)
+      surfaceTemperatureMax
+    else if (surfaceTemperature < surfaceTemperatureMin)
+      surfaceTemperatureMin
+    else
+      surfaceTemperature
+  }
+
   /**
    * Here 'min' means for the lowest mass star of this class.
    */
@@ -67,6 +88,13 @@ trait StarType{
    */
   def luminosityMax: Double
 
+  def luminosity(mass: Double): Double = {
+    val massRange = massMax - massMin
+    val massFrac = (mass - massMin) / massRange
+    val lumRange = luminosityMax - luminosityMin
+    (massFrac * lumRange) + luminosityMin
+  }
+
   /**
    * Dumb linear interpolation of star data
    * @param mass Given a mass
@@ -75,13 +103,16 @@ trait StarType{
   def generateStarData(mass: Double, r: Random): StarData = {
     val massRange = massMax - massMin
     val massFrac = (mass - massMin) / massRange
-    val lumRange = luminosityMax - luminosityMin
+
     val radRange = radiusMax - radiusMin
     val color = new ColorRGBA
     color.interpolate(colorMin, colorMax, massFrac.toFloat)
-    val sTempRange = surfaceTemperatureMax - surfaceTemperatureMin
-    new StarData(this, mass, (massFrac * lumRange) + luminosityMin, (massFrac * radRange) + radiusMin, color,
-      (massFrac * sTempRange) + surfaceTemperatureMin)
+
+    val starLuminosity = luminosity(mass)
+    val radius = (massFrac * radRange) + radiusMin
+    new StarData(this, mass, starLuminosity, radius, color,
+      surfaceTemperature(starLuminosity, radius)
+    )
   }
 
   def name: String
@@ -117,4 +148,8 @@ object StarType {
   def genColor(r: Int, g: Int, b: Int): ColorRGBA = {
     new ColorRGBA(r.toFloat/256.0f, g.toFloat/256.0f, b.toFloat/256.0f, 1.0f)
   }
+
+  //val SolarMass =
+
+  val StefanBoltzmannConst = 5.670373e-8
 }
