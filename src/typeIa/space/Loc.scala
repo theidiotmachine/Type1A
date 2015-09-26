@@ -111,6 +111,10 @@ object Loc{
 
   def pcTom(pc: Double): Long = (pc * ParsecsInMetres).toLong
 
+  def mToau(m: Double): Double = m * MetresInAstronomicalUnits
+
+  def mToau(m: Long): Double = m.toDouble * MetresInAstronomicalUnits
+
   def unitAndauLength(unit: Vector3f, aulength: Double): Loc = {
     Loc.au(aulength * unit.x, aulength * unit.y, aulength * unit.z)
   }
