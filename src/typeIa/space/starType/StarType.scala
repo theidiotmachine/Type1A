@@ -1,6 +1,7 @@
 package typeIa.space.starType
 
 import com.jme3.math.ColorRGBA
+import typeIa.maths.Constants
 import typeIa.space.StarData
 
 import scala.util.Random
@@ -38,6 +39,18 @@ trait StarType{
   def radiusMax: Double
 
   /**
+   * Unbelievably dumb liner interpolation
+   * @param mass the star mass
+   * @return the star radius
+   */
+  def radius(mass: Double): Double = {
+    val massRange = massMax - massMin
+    val radRange = radiusMax - radiusMin
+    val massFrac = (mass - massMin) / massRange
+    (massFrac * radRange) + radiusMin
+  }
+
+  /**
    * The lowest surface temp this star type can have. In K
    */
   def surfaceTemperatureMin: Double
@@ -59,7 +72,8 @@ trait StarType{
     //luminosity/(4*pi*radius^2*sbConst) = surfaceTemp^4
     //luminosity/(4*pi*radius^2*sbConst)^1/4 = surfaceTemp
 
-    val surfaceTemperature = math.pow(luminosity/(4*math.Pi*radius*radius*StarType.StefanBoltzmannConst), 0.25)
+    val radiusm = radius * StarType.SolarRadiusm
+    val surfaceTemperature = math.pow((luminosity*StarType.SolarLuminosityW)/(4*math.Pi*radiusm*radiusm*Constants.StefanBoltzmann), 0.25)
     if(surfaceTemperature > surfaceTemperatureMax)
       surfaceTemperatureMax
     else if (surfaceTemperature < surfaceTemperatureMin)
@@ -104,14 +118,14 @@ trait StarType{
     val massRange = massMax - massMin
     val massFrac = (mass - massMin) / massRange
 
-    val radRange = radiusMax - radiusMin
     val color = new ColorRGBA
     color.interpolate(colorMin, colorMax, massFrac.toFloat)
 
     val starLuminosity = luminosity(mass)
-    val radius = (massFrac * radRange) + radiusMin
-    new StarData(this, mass, starLuminosity, radius, color,
-      surfaceTemperature(starLuminosity, radius)
+    val starRadius = radius(mass)
+
+    new StarData(this, mass, starLuminosity, starRadius, color,
+      surfaceTemperature(starLuminosity, starRadius)
     )
   }
 
@@ -149,7 +163,8 @@ object StarType {
     new ColorRGBA(r.toFloat/256.0f, g.toFloat/256.0f, b.toFloat/256.0f, 1.0f)
   }
 
-  //val SolarMass =
+  val SolarRadiusm = 696342000
+  val SolarLuminosityW = 3.846e26
 
-  val StefanBoltzmannConst = 5.670373e-8
+
 }
