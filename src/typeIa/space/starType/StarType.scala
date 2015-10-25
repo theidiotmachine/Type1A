@@ -73,7 +73,7 @@ trait StarType{
     //luminosity/(4*pi*radius^2*sbConst)^1/4 = surfaceTemp
 
     val radiusm = radius * StarType.SolarRadiusm
-    val surfaceTemperature = math.pow((luminosity*StarType.SolarLuminosityW)/(4*math.Pi*radiusm*radiusm*Constants.StefanBoltzmann), 0.25)
+    val surfaceTemperature = math.pow((luminosity*StarType.SolarLuminosityW)/(4*math.Pi*radiusm*radiusm*Constants.StefanBoltzmann.value), 0.25)
     if(surfaceTemperature > surfaceTemperatureMax)
       surfaceTemperatureMax
     else if (surfaceTemperature < surfaceTemperatureMin)

@@ -1,4 +1,4 @@
-package typeIa.maths
+package typeIa.maths.units_old
 
 /**
  *
@@ -11,6 +11,6 @@ object PerKGM3PerS2{
   def apply(d: Double) = new PerKGM3PerS2(d)
 
   implicit class PerKGM3PerS2_KG(val x: PerKGM3PerS2) /*extends AnyVal*/{
-    def *(r: Kilograms): M3PerS2 = new M3PerS2(x.x * r.kg)
+    def *(r: Kilograms): M3PerS2 = new M3PerS2(x.x * r.x)
   }
 }

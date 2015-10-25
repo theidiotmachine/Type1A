@@ -1,4 +1,4 @@
-package typeIa.maths
+package typeIa.maths.units_old
 
 /**
  * Distance in m, represented as a double for fiddly maths.
@@ -21,9 +21,13 @@ class Metres(val x: Double) extends AnyVal {
   def `²`: M2 = new M2(x*x)
   def `³`: M3 = new M3(x*x*x)
   def *(r: Metres): M2 = new M2(x*r.x)
+  def √(): M1_2 = new M1_2(math.sqrt(x))
+  def invSqrt: PerM1_2 = new PerM1_2(math.pow(x, -0.5))
 
+  def +(r: Metres): Metres = new Metres(x+r.x)
   def -(r: Metres): Metres = new Metres(x-r.x)
   def /(r: Metres): Double = x/r.x
+  def unary_-():Metres = new Metres(-x)
 }
 
 object Metres {
@@ -34,19 +38,45 @@ object Metres {
     def *(r: Metres): Metres = new Metres(x* r.x)
   }
 
-  implicit class Metres_Double(val m: Metres) /*extends AnyVal*/{
-    def *(r: Double): Metres = new Metres(m.x*r)
+  implicit class Metres_Double(val x: Metres) /*extends AnyVal*/{
+    def *(r: Double): Metres = new Metres(x.x * r)
+    def /(r: Double): Metres = new Metres(x.x / r)
   }
-  
+
+  /*
   def au(au: Double): Metres = {
     new Metres(au * 149597870700.0)
   }
+  */
+
 }
 
 class M2(val x: Double) extends AnyVal {
   def *(r: Double): M2 = new M2(x * r)
   def /(r: M2): Double = x/r.x
+  def -(r: M2): M2 = new M2(x-r.x)
+  def unary_-():M2 = new M2(-x)
 }
 
-class M3(val x: Double) extends AnyVal
+object M2{
+  implicit class Double_M2(val x: Double) extends AnyVal{
+    def *(r: M2): M2 = new M2(x* r.x)
+  }
+
+  implicit class M2_KGPerS3PerK4(val x: M2){
+    def *(r: KGPerS3PerK4): KGM2PerS3PerK4 = new KGM2PerS3PerK4(x.x * r.x)
+  }
+}
+
+class M3(val x: Double) extends AnyVal{
+
+}
+
+class M1_2(val x: Double) extends AnyVal{
+
+}
+
+class PerM1_2(val x: Double) extends AnyVal{
+
+}
 

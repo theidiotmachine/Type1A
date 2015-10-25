@@ -1,7 +1,9 @@
 package typeIa.space
 
 import com.jme3.math.ColorRGBA
-import typeIa.space.starType.StarType
+import typeIa.space.starType.{GTypeMainSequence, StarType}
+
+import scala.util.Random
 
 /**
  * Data for a star
@@ -16,6 +18,7 @@ class StarData(val starType: StarType,
                val mass: Double, val luminosity: Double, val radius: Double, val color: ColorRGBA, val surfaceTemperature: Double) {
   def tip: String = starType.name
 
+  val radiusm = radius * StarType.SolarRadiusm
   /**
    * 150-170K from the protostar, where ice grains can form. From
    * https://ay201b.wordpress.com/the-snow-line-in-protoplanetary-disks/
@@ -25,12 +28,36 @@ class StarData(val starType: StarType,
    * @return
    */
   def formationSnowLineau: Double = ???
+  //snowLineau(0.75)
+
+  def snowLineau(/*dimness: Double = 1.0*/): Double = {
+    //val bodge = 1.3
+    //val formationSurfaceTemperature = surfaceTemperature * dimness// * bodge
+    Loc.mToau(math.sqrt((
+      (radiusm * radiusm * surfaceTemperature * surfaceTemperature * surfaceTemperature * surfaceTemperature)
+        / (160*160*160*160)
+      ) / 4))
+  }
 
   def spaceTempAtm(distm: Long) = {
-    //distm = (((starRad^2*surfTem^4)/out)/4)^1/2
-    //4*(distm^2) = (starRad^2*surfTem^4)/out
-    //out = (starRad^2*surfTem^4)/(4*(distm^2))
+    //distm = (((starRad^2*surfTem^4)/(out^4))/4)^1/2
+    //4*(distm^2) = (starRad^2*surfTem^4)/(out^4)
+    //out = ((starRad^2*surfTem^4)/(4*(distm^2)))^1/4
     val distmd = distm.toDouble
-    (radius*radius*surfaceTemperature*surfaceTemperature*surfaceTemperature*surfaceTemperature)/(4*distmd*distmd)
+    //this bodge makes the numbers work, so we get ~5au
+    val bodge = 1.0
+    val bodgedSurfaceTemperature = surfaceTemperature * bodge
+    math.pow((radiusm*radiusm*bodgedSurfaceTemperature*bodgedSurfaceTemperature*bodgedSurfaceTemperature*bodgedSurfaceTemperature)/(4*distmd*distmd), 0.25)
+  }
+}
+
+object StarData {
+  def main(args: Array[String]) {
+    val starData = GTypeMainSequence.generateStarData(1, new Random())
+    val snowLineau = starData.snowLineau()
+    val fsnowLineau = starData.formationSnowLineau
+    val t = starData.spaceTempAtm((Loc.AstronomicalUnitsInMetres * 5.0).toLong)
+    val t2 = starData.spaceTempAtm((Loc.AstronomicalUnitsInMetres).toLong)
+    val i = 3
   }
 }

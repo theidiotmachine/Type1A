@@ -1,4 +1,4 @@
-package typeIa.maths
+package typeIa.maths.units_old
 
 /**
  * Temperature in Kelvin
@@ -8,7 +8,7 @@ package typeIa.maths
 class DegreesKelvin(val k: Double) extends AnyVal{
   def +(r: DegreesKelvin) = new DegreesKelvin(k+r.k)
   def `⁴`: K4 = new K4(k*k*k*k)
-  override def toString: String = k.toString + "K"
+  override def toString: String = k.toString + " K"
 }
 
 object DegreesKelvin {

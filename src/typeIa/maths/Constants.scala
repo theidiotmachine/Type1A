@@ -1,11 +1,13 @@
 package typeIa.maths
 
+import typeIa.maths.units.Units._
+
 /**
  * Physics and maths consts
  */
 final object Constants {
-  val StefanBoltzmann = new KGPerS3PerK4(5.670373e-8)
-  val Gravitational = new PerKGM3PerS2(6.67408e-11)
+  val StefanBoltzmann = KGPerS3PerK4(5.670373e-8)
+  val Gravitational = PerKGM3PerS2(6.67408e-11)
 
   val SolarRadius = new Metres(696342000)
   val SolarTemperature = new DegreesKelvin(5778)

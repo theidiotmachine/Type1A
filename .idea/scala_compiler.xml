@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaCompilerConfiguration">
+    <option name="optimiseBytecode" value="true" />
+    <option name="explainTypeErrors" value="true" />
+    <parameters>
+      <parameter value="-feature" />
+    </parameters>
+  </component>
+</project>
