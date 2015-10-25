@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
-  <component name="FacetManager" />
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
@@ -11,8 +10,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="jme3" level="project" />
-    <orderEntry type="library" name="scala-compiler" level="project" />
-    <orderEntry type="library" name="scala-sdk" level="project" />
+    <orderEntry type="library" name="scala-sdk-2.11.7" level="project" />
   </component>
 </module>
-

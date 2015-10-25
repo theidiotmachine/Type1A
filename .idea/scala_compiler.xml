@@ -5,6 +5,7 @@
     <option name="explainTypeErrors" value="true" />
     <parameters>
       <parameter value="-feature" />
+      <parameter value="-Yinline-warnings" />
     </parameters>
   </component>
 </project>
