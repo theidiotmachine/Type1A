@@ -65,6 +65,18 @@ object Units{
     @inline
     def unary_- = Quantity[M, KG, S, K, Mol, CD](-value)
 
+    @inline
+    def >=(r: This) = value >= r.value
+
+    @inline
+    def >(r: This) = value > r.value
+
+    @inline
+    def <=(r: This) = value <= r.value
+
+    @inline
+    def <(r: This) = value < r.value
+
     def mString(implicit p: Printable[M]): String = "m" + p.print
 
     override def toString: String = {
@@ -113,7 +125,15 @@ object Units{
     new Metres(au * 149597870700.0)
   }
 
-  def solarMassPerYear(x: Double): KGPerS = {
+  def solarMassesPerYear(x: Double): KGPerS = {
     x * Constants.SolarMass / Constants.SeccondsPerYear
   }
+  
+  def earthMasses(x: Double): Kilograms = new Kilograms(x* 5.972e24)
+
+  def toau(m: Metres): Double = {
+    m.value / 149597870700.0
+  }
+
+  def toEarthMasses(x: Kilograms): Double = x.value / 5.972e24
 }
