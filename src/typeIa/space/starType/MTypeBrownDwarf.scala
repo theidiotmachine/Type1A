@@ -1,6 +1,7 @@
 package typeIa.space.starType
 
 import com.jme3.math.ColorRGBA
+import typeIa.maths.units.Units.DegreesKelvin
 
 /**
  * An M Type brown dwarf. Data mostly from https://en.wikipedia.org/wiki/Brown_dwarf
@@ -30,7 +31,7 @@ object MTypeBrownDwarf extends StarType {
    *
    * Taken from the M main seqnece
    */
-  override def surfaceTemperatureMax: Double = 2400
+  override def surfaceTemperatureMax: DegreesKelvin = new DegreesKelvin(2400)
 
   /**
    * In multiple of sol luminosity
@@ -63,7 +64,7 @@ object MTypeBrownDwarf extends StarType {
    *
    * Taken from https://en.wikipedia.org/wiki/WISE_1828%2B2650
    */
-  override def surfaceTemperatureMin: Double = 400
+  override def surfaceTemperatureMin: DegreesKelvin = new DegreesKelvin(400)
 
   /**
    * The smallest mass this star type can be. In solar masses

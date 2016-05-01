@@ -2,6 +2,7 @@ package typeIa.space.starType
 
 import com.jme3.math.ColorRGBA
 import typeIa.maths.Constants
+import typeIa.maths.units.Units.DegreesKelvin
 import typeIa.space.StarData
 
 import scala.util.Random
@@ -40,7 +41,8 @@ trait StarType{
 
   /**
    * Unbelievably dumb liner interpolation
-   * @param mass the star mass
+    *
+    * @param mass the star mass
    * @return the star radius
    */
   def radius(mass: Double): Double = {
@@ -53,14 +55,14 @@ trait StarType{
   /**
    * The lowest surface temp this star type can have. In K
    */
-  def surfaceTemperatureMin: Double
+  def surfaceTemperatureMin: DegreesKelvin
 
   /**
    * The highest surface temp this star type can have. In K
    */
-  def surfaceTemperatureMax: Double
+  def surfaceTemperatureMax: DegreesKelvin
 
-  def surfaceTemperature(luminosity: Double, radius: Double): Double = {
+  def surfaceTemperature(luminosity: Double, radius: Double): DegreesKelvin = {
     //val massRange = massMax - massMin
     //val massFrac = (mass - massMin) / massRange
     //val sTempRange = surfaceTemperatureMax - surfaceTemperatureMin
@@ -72,8 +74,8 @@ trait StarType{
     //luminosity/(4*pi*radius^2*sbConst) = surfaceTemp^4
     //luminosity/(4*pi*radius^2*sbConst)^1/4 = surfaceTemp
 
-    val radiusm = radius * StarType.SolarRadiusm
-    val surfaceTemperature = math.pow((luminosity*StarType.SolarLuminosityW)/(4*math.Pi*radiusm*radiusm*Constants.StefanBoltzmann.value), 0.25)
+    val radiusm = Constants.SolarRadius * radius
+    val surfaceTemperature = ((Constants.SolarLuminosity*luminosity)/(Constants.StefanBoltzmann*4*math.Pi*radiusm*radiusm)).∜
     if(surfaceTemperature > surfaceTemperatureMax)
       surfaceTemperatureMax
     else if (surfaceTemperature < surfaceTemperatureMin)
@@ -111,7 +113,8 @@ trait StarType{
 
   /**
    * Dumb linear interpolation of star data
-   * @param mass Given a mass
+    *
+    * @param mass Given a mass
    * @return Create me some star data for this star type
    */
   def generateStarData(mass: Double, r: Random): StarData = {
@@ -162,9 +165,4 @@ object StarType {
   def genColor(r: Int, g: Int, b: Int): ColorRGBA = {
     new ColorRGBA(r.toFloat/256.0f, g.toFloat/256.0f, b.toFloat/256.0f, 1.0f)
   }
-
-  val SolarRadiusm = 696342000
-  val SolarLuminosityW = 3.846e26
-
-
 }

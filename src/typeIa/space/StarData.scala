@@ -1,12 +1,15 @@
 package typeIa.space
 
 import com.jme3.math.ColorRGBA
+import typeIa.maths.Constants
+import typeIa.maths.units.Units.DegreesKelvin
 import typeIa.space.starType.{GTypeMainSequence, StarType}
 
 import scala.util.Random
 
 /**
  * Data for a star
+ *
  * @param starType    The star type
  * @param mass        In solar masses
  * @param luminosity  In solar lumionsity
@@ -15,16 +18,17 @@ import scala.util.Random
  * @param surfaceTemperature  In degrees K
  */
 class StarData(val starType: StarType,
-               val mass: Double, val luminosity: Double, val radius: Double, val color: ColorRGBA, val surfaceTemperature: Double) {
+               val mass: Double, val luminosity: Double, val radius: Double, val color: ColorRGBA, val surfaceTemperature: DegreesKelvin) {
   def tip: String = starType.name
 
-  val radiusm = radius * StarType.SolarRadiusm
+  val radiusm = Constants.SolarRadius * radius
   /**
    * 150-170K from the protostar, where ice grains can form. From
    * https://ay201b.wordpress.com/the-snow-line-in-protoplanetary-disks/
    * 'isolation mass of planetesimals is amplified by a factor of 8, cores form faster. [...] Gas giants form
    * much more easily beyond the snow line'
    * 2.7AU from sun
+ *
    * @return
    */
   def formationSnowLineau: Double = ???
@@ -34,7 +38,7 @@ class StarData(val starType: StarType,
     //val bodge = 1.3
     //val formationSurfaceTemperature = surfaceTemperature * dimness// * bodge
     Loc.mToau(math.sqrt((
-      (radiusm * radiusm * surfaceTemperature * surfaceTemperature * surfaceTemperature * surfaceTemperature)
+      (radiusm * radiusm * surfaceTemperature.`⁴`).value
         / (160*160*160*160)
       ) / 4))
   }
@@ -47,7 +51,8 @@ class StarData(val starType: StarType,
     //this bodge makes the numbers work, so we get ~5au
     val bodge = 1.0
     val bodgedSurfaceTemperature = surfaceTemperature * bodge
-    math.pow((radiusm*radiusm*bodgedSurfaceTemperature*bodgedSurfaceTemperature*bodgedSurfaceTemperature*bodgedSurfaceTemperature)/(4*distmd*distmd), 0.25)
+    //math.pow((radiusm*radiusm*bodgedSurfaceTemperature.`⁴`)/(4*distmd*distmd), 0.25)
+    ((radiusm*radiusm*bodgedSurfaceTemperature.`⁴`)/(4*distmd*distmd)).∜
   }
 }
 

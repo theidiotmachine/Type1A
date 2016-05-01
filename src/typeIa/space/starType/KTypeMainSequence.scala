@@ -1,6 +1,7 @@
 package typeIa.space.starType
 
 import com.jme3.math.ColorRGBA
+import typeIa.maths.units.Units.DegreesKelvin
 
 /**
  * K type main sequence star
@@ -26,7 +27,7 @@ object KTypeMainSequence extends MainSequence{
   /**
    * The highest surface temp this star type can have. In K
    */
-  override def surfaceTemperatureMax: Double = 5200
+  override def surfaceTemperatureMax: DegreesKelvin = new DegreesKelvin(5200)
 
   /**
    * In multiple of sol luminosity
@@ -51,7 +52,7 @@ object KTypeMainSequence extends MainSequence{
   /**
    * The lowest surface temp this star type can have. In K
    */
-  override def surfaceTemperatureMin: Double = 3700
+  override def surfaceTemperatureMin: DegreesKelvin = new DegreesKelvin(3700)
 
   /**
    * The smallest mass this star type can be. In solar masses

@@ -1,6 +1,7 @@
 package typeIa.space.starType
 
 import com.jme3.math.ColorRGBA
+import typeIa.maths.units.Units.DegreesKelvin
 import typeIa.space.StarData
 
 import scala.util.Random
@@ -29,7 +30,7 @@ object WhiteDwarf extends StarType{
   /**
    * The highest surface temp this star type can have. In K
    */
-  override def surfaceTemperatureMax: Double = 150000
+  override def surfaceTemperatureMax: DegreesKelvin = new DegreesKelvin(150000)
 
   /**
    * In multiple of sol luminosity
@@ -56,7 +57,7 @@ object WhiteDwarf extends StarType{
   /**
    * The lowest surface temp this star type can have. In K
    */
-  override def surfaceTemperatureMin: Double = 4000
+  override def surfaceTemperatureMin: DegreesKelvin = new DegreesKelvin(4000)
 
   /**
    * The smallest mass this star type can be. In solar masses
@@ -70,7 +71,8 @@ object WhiteDwarf extends StarType{
 
   /**
    * Dumb linear interpolation of star data
-   * @param mass Given a mass
+    *
+    * @param mass Given a mass
    * @return Create me some star data for this star type
    */
   override def generateStarData(mass: Double, r: Random): StarData = {

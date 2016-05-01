@@ -1,6 +1,7 @@
 package typeIa.space.starType
 
 import com.jme3.math.ColorRGBA
+import typeIa.maths.units.Units.DegreesKelvin
 
 /**
  * Red giants. Data from
@@ -31,7 +32,7 @@ object RedGiant extends StarType{
   /**
    * The highest surface temp this star type can have. In K
    */
-  override def surfaceTemperatureMax: Double = 4000
+  override def surfaceTemperatureMax: DegreesKelvin = new DegreesKelvin(4000)
 
   /**
    * In multiple of sol luminosity
@@ -58,7 +59,7 @@ object RedGiant extends StarType{
   /**
    * The lowest surface temp this star type can have. In K
    */
-  override def surfaceTemperatureMin: Double = 3000
+  override def surfaceTemperatureMin: DegreesKelvin = new DegreesKelvin(3000)
 
   /**
    * The smallest mass this star type can be. In solar masses

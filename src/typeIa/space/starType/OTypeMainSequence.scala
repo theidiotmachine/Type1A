@@ -1,6 +1,7 @@
 package typeIa.space.starType
 
 import com.jme3.math.ColorRGBA
+import typeIa.maths.units.Units.DegreesKelvin
 
 /** O-Type main sequence.
  *
@@ -26,8 +27,8 @@ object OTypeMainSequence extends MainSequence {
   def massMax: Double = 100
   def radiusMin: Double = 6.6
   def radiusMax: Double = 20
-  def surfaceTemperatureMin: Double = 30000
-  def surfaceTemperatureMax: Double = 52000
+  def surfaceTemperatureMin: DegreesKelvin = new DegreesKelvin(30000)
+  def surfaceTemperatureMax: DegreesKelvin = new DegreesKelvin(52000)
 
   /**
    * typical is 9bb0ff.. Next, B, is aabfff
