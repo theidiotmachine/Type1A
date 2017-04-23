@@ -1,12 +1,11 @@
 package typeIa.space
 
 import typeIa.maths._
-import typeIa.maths.units.Units
+import typeIa.maths.units.{AU, Units}
 import typeIa.maths.units.Units._
-import typeIa.space.Chemical.Chemical
-import typeIa.space.Chemical._
+import typeIa.space.Chemical.{Chemical, _}
 
-import scala.collection._
+import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
 /**
@@ -21,8 +20,11 @@ import scala.util.Random
  * Dynamics and accretion of planetesimals, Kokubo and Id = 01A308_002.pdf
  * Ice Lines, Planetesimal Composition and Solid Surface Density in the Solar Nebula, Dodson-Robinson,
     //Willacy, Bodenheimer, Turner, Beichman = 0806.3788v2.pdf
+ * The resonance overlap criterion and the onset of stochastic behaviour in the restricted three body problem, Wisdom
  */
 object ProtoPlanetaryDisk {
+
+  case class Resonance(a: Int, b: Int)
 
   /**
    * Yeah, the little ones are called planetesimals, but I mean c'mon. This is a hunk of stuff that will eventually
@@ -30,40 +32,162 @@ object ProtoPlanetaryDisk {
    */
   case class ProtoPlanet(composition: Map[Chemical, Kilograms]){
     def mass: Kilograms = composition.foldLeft(Kilograms(0))((x, t)=>x + t._2)
+    def rockMass: Kilograms = composition(Chemical.Silicates) + composition(Chemical.Iron)
   }
 
-  case class DiskSection(composition: Map[Chemical, Kilograms], massFractions: Map[Int, Double]){
+  /**
+    * Disk section base class
+    */
+  trait DiskSection {
+    val r1: Metres
+    val r2: Metres
 
-    def mass: Kilograms = composition.foldLeft(Kilograms(0))((x, t)=>x + t._2)
-    def maxPow = math.log10(mass.value).floor.toInt
-    def accrete: DiskSection = {
-      val max = maxPow
+    def accretable: Boolean
+  }
 
-      val newMassFractions = mutable.Map[Int, Double]()
-      val it = massFractions.keysIterator
-      while(it.hasNext) {
-        val pow = it.next()
-        val r = 0.5//random
+  /**
+    * Disk section which simply contains unchanged disk stuff.
+    * @param r1 inner radius
+    * @param r2 outer radius
+    * @param chemData the chemical composition of the disk
+    */
+  case class SimpleDiskSection(r1: Metres, r2: Metres, chemData: Map[Chemical, ChemicalData]) extends DiskSection {
+    override def accretable: Boolean = true
 
-      }
-
-      DiskSection(composition, newMassFractions.toMap)
+    override def toString: String = {
+      "DiskSection from " + AU.au(r1) + " to " + AU.au(r2)
     }
 
+    //def get
   }
+
+  trait LumpyDiskSection extends DiskSection {
+    val composition: Map[Chemical, Kilograms]
+    val mass: Kilograms = composition.foldLeft(Kilograms(0))((x, t)=>x + t._2)
+    val rockMass: Kilograms = composition(Chemical.Silicates) + composition(Chemical.Iron)
+
+    override def accretable: Boolean = false
+  }
+
+  /**
+    * A disk section with a single proto planet in it
+    * @param r1 inner radius
+    * @param r2 outer radius
+    * @param r actual orbital radius of the pp
+    * @param composition what the pp is made of
+    */
+  class ProtoplanetDiskSection(val r1: Metres, val r2: Metres, r: Metres, val composition: Map[Chemical, Kilograms],
+                              solarMass: Kilograms) extends LumpyDiskSection {
+
+
+    override def toString: String = {
+      "Protoplanet at " + AU.au(r) + "; mass: " + Units.toEarthMasses(mass).toString +
+        " rock mass: " + Units.toEarthMasses(rockMass)
+    }
+
+
+    val orbitalPeriod: Seconds = 2.0 * math.Pi * (r.`³`/(solarMass * Constants.Gravitational)).√
+
+    /**
+      * Given this orbit, find the pair of distances from the sun that it would resonate at
+      *
+      * This is just a straight rework of the keplerian circular orbital period. It's sooo great that everything is
+      * circular
+      * @param resonance a resonance pair
+      * @param solarMass the solar mass
+      * @return
+      */
+    def getResonanceOrbitalDist(resonance: Resonance, solarMass: Kilograms): (Metres, Metres) = {
+      //period = 2.0 * math.Pi * √(r³/(solarMass * Constants.Gravitational))
+      //so when period * resonance.a == period2 * resonance.b
+      //(period * resonance.a)/resonance.b = period2
+      //(2.0 * math.Pi * √(r³/(solarMass * Constants.Gravitational)) * resonance.a)/resonance.b = 2.0 * math.Pi * √(r2³/(solarMass * Constants.Gravitational))
+      //(√(r³/(solarMass * Constants.Gravitational)) * resonance.a)/resonance.b = √(r2³/(solarMass * Constants.Gravitational))
+      //((√(r³/(solarMass * Constants.Gravitational)) * resonance.a)/resonance.b)^2 = r2³/(solarMass * Constants.Gravitational)
+      //(((√(r³/(solarMass * Constants.Gravitational)) * resonance.a)/resonance.b)^2)*(solarMass * Constants.Gravitational) = r2³
+      //∛((((√(r³/(solarMass * Constants.Gravitational)) * resonance.a)/resonance.b)^2)*(solarMass * Constants.Gravitational)) = r2
+      val mg = solarMass * Constants.Gravitational
+      (((((r.`³` / mg).√ * resonance.a) / resonance.b).`²` *mg).∛, ((((r.`³` / mg).√ * resonance.b) / resonance.a).`²` *mg).∛)
+    }
+
+    /**
+      * This is the classic [Wisdom 1980] formula. I am fairly sure I am using it right!
+      * @param solarMass the solar mass
+      * @return
+      */
+    def getChaoticZone(solarMass: Kilograms): Metres = {
+      math.pow(1.3 * (mass / solarMass).value, 2.0/7.0) * r
+    }
+
+    def findChaoticResonanceCandidates(solarMass: Kilograms, resonances: Array[Resonance]): List[Metres] = {
+      val cz = getChaoticZone(solarMass)
+      val outerR = r + cz / 2.0
+      val innerR = r - cz / 2.0
+      resonances.foldLeft(List[Metres]())((b, r)=>{
+        val (cand1, cand2) = getResonanceOrbitalDist(r, solarMass)
+        val o1 = if(cand1 > innerR && cand1 < outerR)
+          Option(cand1)
+        else
+          None
+        val o2 = if(cand2 > innerR && cand2 < outerR)
+          Option(cand2)
+        else
+          None
+        b ++ o1 ++ o2
+      })
+    }
+
+    val chaoticResonanceCandidates: List[Metres] = findChaoticResonanceCandidates(solarMass, kirkwoodResonances)
+  }
+
+  class PlanetesimalDiskSection(val r1: Metres, val r2: Metres,
+                                val composition: Map[Chemical, Kilograms]) extends LumpyDiskSection {
+
+  }
+
+  /*
+    case class DiskSection(composition: Map[Chemical, Kilograms],
+                           /*massFractions: Map[Int, Double]*/
+                          r1: Metres, r2: Metres
+                           ){
+
+
+      def mass: Kilograms = composition.foldLeft(Kilograms(0))((x, t)=>x + t._2)
+
+      /*
+      def maxPow: Int = math.log10(mass.value).floor.toInt
+      def accrete: DiskSection = {
+        val max = maxPow
+
+        val newMassFractions = mutable.Map[Int, Double]()
+        val it = massFractions.keysIterator
+        while(it.hasNext) {
+          val pow = it.next()
+          val r = 0.5//random
+
+        }
+
+        DiskSection(composition, newMassFractions.toMap)
+      }
+      */
+
+    }
+  */
 
   case class ChemicalData(iceLine: Metres, massRatio: Double)
 
   /**
    * Paraphrased from wiki, a body's Hill sphere is the region in which it dominates the attraction of satellites.
    *
-   * In other words, a small body orbiting a larger body will influence satellites in this radius
+   * In other words, a small body orbiting a larger body will influence satellites in this radius.
+    *
+    * This is for circular orbits
    * @param semiMajorAxis The semi-major axis of the smaller body round the larger. For circular, this is the orbital radius
    * @param smallMass The mass of the smaller body
    * @param largeMass The mass of the larger body
    * @return The hill radius in m
    */
-  def hillRadius(semiMajorAxis: Metres, smallMass: Kilograms, largeMass: Kilograms): Metres = {
+  def circularHillRadius(semiMajorAxis: Metres, smallMass: Kilograms, largeMass: Kilograms): Metres = {
     //math.pow(semiMajorAxism, 3) * (1.0 - eccentrictym) * math.sqrt(smallMasskg/(3.0 * largeMasskg))
     semiMajorAxis *
     //* (MetresDouble(1) - eccentricty) *
@@ -86,12 +210,12 @@ object ProtoPlanetaryDisk {
    *
    * As an aside, I spent about a month of my life reading papers on this, and the physics are *fascinating*. Maybe
    * this is what I'll do when I retire.
-   * @param r
-   * @param starMass
-   * @param starRadius
-   * @param accretionRate
-   * @param starLuminosity
-   * @param grazingAngleRoll
+   * @param r dist from star
+   * @param starMass kg
+   * @param starRadius metres
+   * @param accretionRate kg/s
+   * @param starLuminosity watts
+   * @param grazingAngleRoll a random number
    * @return
    */
   def ppdEffectiveTemperature(r: Metres, starMass: Kilograms, starRadius: Metres, accretionRate: KGPerS,
@@ -103,6 +227,7 @@ object ProtoPlanetaryDisk {
     k4.∜
   }
 
+  /*
   private def ppdiskAccretionTemperature(r: Metres, z: Metres, starMass: Kilograms, diskMass: Kilograms, accretionRate: KGPerS,
                                               dustToGasRatio: Double,
                                               avgOpacityAtWavelengthsOfDustThermalEmission: PerKGM2,
@@ -114,6 +239,7 @@ object ProtoPlanetaryDisk {
     //math.pow(3.0*verticalOpticalDepth/4.0, 0.25) * effectiuveTempAccretion
     (3.0*verticalOpticalDepth/4.0).∜ * effectiuveTempAccretion
   }
+  */
 
   //disks have masses between 0.0001 and 0.1 solar masses
   //vertical scale heights at 100 au of 5-20 au
@@ -166,41 +292,25 @@ object ProtoPlanetaryDisk {
    * out to 30au (Neptune)
    *
    * This too low for super-jupiters. multiply up by random?
-   * @param starMass
+   * @param starMass star mass
+   * @param r random number 0-1
    * @return
    */
-  def ppdMass(starMass: Kilograms, massRoll: Double): Kilograms = {
+  def ppdMass(starMass: Kilograms, r: Double): Kilograms = {
     //the median ratio of disk to stellar mass is 0.9% [Protoplanetary Disks and Their Evolution, Williams and Cieza]
     //"the total disk mass around young stars is distributed in a range of 0.001–0.1M⊙", [Dynamics and accretion of planetesimals, Kokubo and Ida]
 
-    val k = 0.1 * massRoll * starMass
-    val m = 0.001 * starMass
-    if(k < m)
-      m
+    //val k = 0.1 * massRoll * starMass
+    val ratio = Distributions.gumbel(r, 0.009, 0.025)
+    val min = 0.001
+    val max = 0.1
+    if(ratio < min)
+      min * starMass
+    else if(ratio > max)
+      max * starMass
     else
-      k
+      ratio * starMass
     //0.009 * starMass
-  }
-
-  /**
-   * surface density at point
-   * @param r distance from centre
-   * @param diskMass disk mass
-   * @param characteristicRadius the edge of the dense stuff.
-   * @param γ the radial dependence of the disk viscosity. "From larger samples, Andrews et al. (2009, 2010b) find a tight
-   *          range consistent with all having the same value γ = 0.9. Using a different modeling technique, however,
-   *          Isella, Carpenter & Sargent (2009) find a very wide range γ = −0.8 to 0.8 with mean <γ>=0.1 in their data.
-   *          Negative values of γ correspond to decreasing surface densities for R<Rc, which may be an important
-   *          signature of disk evolution" [Protoplanetary Disks and Their Evolution, Williams and Cieza]
-   * @return
-   */
-  def ppdSurfaceDensity(r: Metres, diskMass: Kilograms, characteristicRadius: Metres, γ: Double): KGPerM2 = {
-    //radial dep of disk viscosity
-    //v proportional tp r ^ γ
-    val rOverCharacteristicRadius = r / characteristicRadius
-    (2.0-γ) * (diskMass/(2.0 * math.Pi * characteristicRadius.`²`)) *
-      (rOverCharacteristicRadius ^ -γ) *
-      math.exp(-1.0 * (rOverCharacteristicRadius ^ (2.0-γ)))
   }
 
   def ppdDustSurfaceDensity(r: Metres, diskMass: Kilograms, characteristicRadius: Metres, γ: Double, gasToDustRatio: Double, iceLine: Metres): KGPerM2 = {
@@ -222,8 +332,61 @@ object ProtoPlanetaryDisk {
     else
       gasToDustRatio * 2.0)
   }
-  
-  
+
+  /**
+    * surface density at point
+    * @param r distance from centre
+    * @param diskMass disk mass
+    * @param characteristicRadius the edge of the dense stuff.
+    * @param γ the radial dependence of the disk viscosity. "From larger samples, Andrews et al. (2009, 2010b) find a tight
+    *          range consistent with all having the same value γ = 0.9. Using a different modeling technique, however,
+    *          Isella, Carpenter & Sargent (2009) find a very wide range γ = −0.8 to 0.8 with mean <γ>=0.1 in their data.
+    *          Negative values of γ correspond to decreasing surface densities for R<Rc, which may be an important
+    *          signature of disk evolution" [Protoplanetary Disks and Their Evolution, Williams and Cieza]
+    * @return
+    */
+  def ppdSurfaceDensity(r: Metres, diskMass: Kilograms, characteristicRadius: Metres, γ: Double): KGPerM2 = {
+    //radial dep of disk viscosity
+    //v proportional tp r ^ γ
+    val rOverCharacteristicRadius = r / characteristicRadius
+    (2.0-γ) * (diskMass/(2.0 * math.Pi * characteristicRadius.`²`)) *
+      (rOverCharacteristicRadius ^ -γ) *
+      math.exp(-1.0 * (rOverCharacteristicRadius ^ (2.0-γ)))
+  }
+
+  /**
+    * Compoistion at a given radius, r
+    * @param r radius
+    * @param chemData raw disk composition
+    * @return
+    */
+  def dustComposition(r: Metres, chemData: Map[Chemical, ChemicalData]): Map[Chemical, Double] = {
+    chemData.map(chemDatum=>{
+      if(r > chemDatum._2.iceLine)
+        chemDatum._1 -> chemDatum._2.massRatio
+      else
+        chemDatum._1 -> 0.0
+    })
+  }
+
+  /**
+    * This is a very simple surface density function that assumes the disk is of uniform composition.
+    * @param r radius for the surface density calculation
+    * @param diskMass disk mass
+    * @param characteristicRadius characteristic radius
+    * @param γ disk angle
+    * @param chemData composition
+    * @return
+    */
+  def chemDustSurfaceDensity(r: Metres, diskMass: Kilograms, characteristicRadius: Metres, γ: Double,
+                             chemData: Map[Chemical, ChemicalData], dustComposition: Map[Chemical, Double]): Map[Chemical, KGPerM2] = {
+    val surfaceDensity = ppdSurfaceDensity(r, diskMass, characteristicRadius, γ)
+    chemData.map(chemDatum=>{
+      chemDatum._1 -> surfaceDensity * dustComposition(chemDatum._1)
+    })
+  }
+
+
 
   /**
    * The point at which the disk starts being fuzzy and thin and not really very interesting
@@ -234,18 +397,6 @@ object ProtoPlanetaryDisk {
   def ppdCharacteristicRadius(ppdMass: Kilograms, p: Double): Metres = {
     //m = k * rc ^ p (where p = 1.6 +/- 0.3)
     //m/rc ^ p = k
-    //now, assumimg rc = 32au (neptune 30 au plus 2 au for general crap)
-    //m = solar mass * 0.009
-    //p = 1.6
-    //we get
-    //(solarMass * 0.009)/((32 * 149597870700.0) ^ 1.6) = k
-    //(1.98855e30* 0.009)/((32 * 149597870700.0) ^ 1.6) = k
-    //1.789695×10²⁸/1.94142503×10²⁰ = k
-    //92184605.243293891
-
-    //so
-    //rc = m/k
-    //???
 
     //now, assumimg rc = 32au (neptune 30 au plus 2 au for general crap)
     //m = solar mass * 0.009
@@ -259,22 +410,24 @@ object ProtoPlanetaryDisk {
     //92184605.243293891
     //which is obviously poop, but you know
     //val k = 92184605.243293891
-    val solCR = 15//32
+    val solCR = 32
     val k = (1.98855e30 * 0.009) / ((solCR * 149597870700.0) ^ 1.6)
     Metres(math.pow(ppdMass.value/k, 1.0/p))
   }
 
-  def ppdOpticalDepth(r: Metres, diskMass: Kilograms, characteristicRadius: Metres, γ: Double, dustOpacity: PerKGM2): Scalar = {
+  /*
+  private def ppdOpticalDepth(r: Metres, diskMass: Kilograms, characteristicRadius: Metres, γ: Double, dustOpacity: PerKGM2): Scalar = {
     ppdSurfaceDensity(r, diskMass, characteristicRadius, γ) * dustOpacity
   }
-
+  */
+/*
   def ppdDensity(r: Metres, z: Metres, starMass: Kilograms, diskMass: Kilograms, characteristicRadius: Metres, γ: Double): KGPerM3 = {
     val surfaceDensity = ppdSurfaceDensity(r, diskMass, characteristicRadius, γ)
     val scaleHeight = ppdPressureScaleHeight(r, starMass)
     (surfaceDensity/(scaleHeight * math.sqrt(2.0*math.Pi))) * math.exp(-(z.`²`/(2*scaleHeight.`²`)))
   }
-
-
+*/
+/*
   def ppdPressureScaleHeight(r: Metres, starMass: Kilograms): Metres = {
     // H = k * r ^ h (where h = 1.3 to 1.5)
     //
@@ -289,6 +442,7 @@ object ProtoPlanetaryDisk {
     //(k * tc * r*r*r)/(mu * mp * Constants.Gravitational * starMass)
     ???
   }
+*/
 
   /**
    * The effective temperature of a ppd is an incredibly complicated calculation. Fortunately, I found something
@@ -303,7 +457,7 @@ object ProtoPlanetaryDisk {
    * @param grazingAngleRoll Dice roll (0.0-1.0) that lets us vary the disk geometry. I used 0.3 for sol
    * @return Effective temperature at location.
    */
-  def temperature(r: Metres, starMass: Kilograms, starRadius: Metres, accretionRate: KGPerS,
+  private [this] def temperature(r: Metres, starMass: Kilograms, starRadius: Metres, accretionRate: KGPerS,
                   starLuminosity: Watts, grazingAngleRoll: Double): DegreesKelvin = 0.5 * ppdEffectiveTemperature(
     r, starMass, starRadius, accretionRate, starLuminosity, grazingAngleRoll
   )
@@ -318,18 +472,17 @@ object ProtoPlanetaryDisk {
    * @return
    */
 
-  def fullIsolatiomMass(r: Metres, starMass: Kilograms, isolationMassConstDiceRoll: Double, dustSurfaceDensity: KGPerM2): Kilograms = {
+  def fullIsolationMass(r: Metres, starMass: Kilograms, isolationMassConstDiceRoll: Double, dustSurfaceDensity: KGPerM2): Kilograms = {
     val c = 1.0 + 0.2 * (isolationMassConstDiceRoll - 0.5)
     (8.0 / math.sqrt(3.0)) * math.pow(math.Pi, 1.5) * math.pow(c, 1.5) * starMass.`¯¹⸍²` * dustSurfaceDensity.`³⸍²` * r.`³`
   }
 
   /**
    * This comes from [Dynamics and accretion of planetesimals, Kokubo and Ida]. I prefer it to the above because it has
-   * a spacing built in, but it's dumb as rocks - it's just the area of the circle bit at a of width b. It also assumes 
-   * constant surface density, which is a bit sad.
-   * @param a
-   * @param b
-   * @param dustSurfaceDensity
+   * a spacing built in, but it's dumb as rocks - it's just the area of the circle bit at a of width b.
+   * @param a inner radius
+   * @param b outer radius
+   * @param dustSurfaceDensity dust surface density
    * @return
    */
   def ppIsolationMass(a: Metres, b: Metres, dustSurfaceDensity: KGPerM2): Kilograms = {
@@ -403,47 +556,57 @@ object ProtoPlanetaryDisk {
   }*/
 
 
+  /**
+    * Is this what they are called? These are the resonances that cause the Kirkwood gaps in the asteroid belt, anyway
+    */
+  val kirkwoodResonances: Array[Resonance] = Array(Resonance(2, 1), Resonance(7,3), Resonance(5, 2), Resonance(3, 1),
+    Resonance(7, 6) //not actually one of the kirkwoods
+  )
 
   def main(args: Array[String]) {
-    val diskMass = ppdMass(Constants.SolarMass, 0.09)
-    println("dm - " + diskMass)
+
+    val solarMass = Constants.SolarMass
+
+    val diskMass = ppdMass(solarMass, 0.4)
+    println("disk mass - " + diskMass)
+    println("disk mass as a % of solar mass - " + (diskMass / solarMass) * 100)
 
     val characteristicRadius = ppdCharacteristicRadius(diskMass, 1.6)
-    println("cr = " + Units.toau(characteristicRadius).toString + "au")
+    println("characteristic radius = " + AU.au(characteristicRadius).toString + " (neptune - 30 au)")
 
     val accretionRate = Units.solarMassesPerYear(10e-8)
     val solarRadius = Constants.SolarRadius * 0.9
     val solarLuminosity: Watts = Constants.SolarLuminosity * 0.8
-    val grazingAngleRoll: Double = 0.25
-    val snowLine = findLine(Constants.SolarMass, solarRadius, accretionRate,
-      solarLuminosity, grazingAngleRoll, Units.Metres(0), characteristicRadius * 2.0, Units.DegreesKelvin(150), Units.DegreesKelvin(170))
-    println("sl = " + Units.toau(snowLine).toString + "au")
+    val grazingAngleRoll: Double = 0.5
+    val snowLine = findLine(solarMass, solarRadius, accretionRate,
+      solarLuminosity, grazingAngleRoll, Units.Metres(0), characteristicRadius * 10.0, Units.DegreesKelvin(150), Units.DegreesKelvin(170))
+    println("snow line = " + AU.au(snowLine).toString)
 
 
     //'dust line' is not a thing, but I mean it makes sense. "800 K [...] the minimum temperature for silicate crys-
     //tallization' [Ice Lines, Planetesimal Composition and Solid Surface Density in the Solar Nebula, Dodson-Robinson,
     //Willacy, Bodenheimer, Turner, Beichman]. Iron is very approximately the same, so this is the iron and dust line
-    val dustLine = findLine(Constants.SolarMass, solarRadius, accretionRate,
+    val dustLine = findLine(solarMass, solarRadius, accretionRate,
         solarLuminosity, grazingAngleRoll, Units.Metres(0), snowLine, Units.DegreesKelvin(800), Units.DegreesKelvin(805))
-    println("dl = " + Units.toau(dustLine).toString + "au")
+    println("dust line = " + AU.au(dustLine).toString)
 
     //I got these from [DENSITY OF METHANE AND NITROGEN AT DIFFERENT TEMPERATURES, Satorre, Domingo, Luna, Santonja]
-    val ch4IceLine = findLine(Constants.SolarMass, solarRadius, accretionRate,
-      solarLuminosity, grazingAngleRoll, snowLine, characteristicRadius * 2.0, Units.DegreesKelvin(35), Units.DegreesKelvin(36))
-    println("ch4l = " + Units.toau(ch4IceLine).toString + "au")
+    val ch4IceLine = findLine(solarMass, solarRadius, accretionRate,
+      solarLuminosity, grazingAngleRoll, snowLine, characteristicRadius * 10.0, Units.DegreesKelvin(35), Units.DegreesKelvin(36))
+    println("methane ice line = " + AU.au(ch4IceLine).toString)
 
     //24, according to [THE MEASURED COMPOSITIONS OF URANUS AND NEPTUNE FROM THEIR FORMATION ON THE CO
     // ICELINE, Ali-Dib, Mousis, Petit, Lunine]. 22 according to [DENSITY OF METHANE AND NITROGEN AT
     // DIFFERENT TEMPERATURES, Satorre, Domingo, Luna, Santonja]
-    val n2IceLine = findLine(Constants.SolarMass, solarRadius, accretionRate,
-      solarLuminosity, grazingAngleRoll, snowLine, characteristicRadius * 3.0, Units.DegreesKelvin(22), Units.DegreesKelvin(24))
-    println("n2l = " + Units.toau(n2IceLine).toString + "au")
+    val n2IceLine = findLine(solarMass, solarRadius, accretionRate,
+      solarLuminosity, grazingAngleRoll, snowLine, characteristicRadius * 10.0, Units.DegreesKelvin(22), Units.DegreesKelvin(24))
+    println("nitrogen ice line = " + AU.au(n2IceLine).toString)
 
     //25 according to [THE MEASURED COMPOSITIONS OF URANUS AND NEPTUNE FROM THEIR FORMATION ON THE CO
     // ICELINE, Ali-Dib, Mousis, Petit, Lunine]
-    val coIceLine = findLine(Constants.SolarMass, solarRadius, accretionRate,
-      solarLuminosity, grazingAngleRoll, snowLine, characteristicRadius * 2.0, Units.DegreesKelvin(25), Units.DegreesKelvin(26))
-    println("col = " + Units.toau(coIceLine).toString + "au")
+    val coIceLine = findLine(solarMass, solarRadius, accretionRate,
+      solarLuminosity, grazingAngleRoll, snowLine, characteristicRadius * 10.0, Units.DegreesKelvin(25), Units.DegreesKelvin(26))
+    println("carbon monoxide ice line = " + AU.au(coIceLine).toString)
 
     //needs to be 50 - 100. From [The gas mass and gas-to-dust ratio in protoplanetary disks, Williams] (which basically says
     //that the ratio is very variable and often a lot less than 100, so, you know, roll dice!)
@@ -453,8 +616,8 @@ object ProtoPlanetaryDisk {
 
     //FIXME numbers!
     val chemData = Map[Chemical, ChemicalData](
-    Hydrogen -> ChemicalData(Units.au(100000), gasFraction * 0.4),
-    Helium -> ChemicalData(Units.au(100000), gasFraction * 0.4),
+    Hydrogen -> ChemicalData(AU(100000), gasFraction * 0.4),
+    Helium -> ChemicalData(AU(100000), gasFraction * 0.4),
     CarbonMonoxide -> ChemicalData(coIceLine, gasFraction * 0.04),
     Water -> ChemicalData(snowLine, gasFraction * 0.04),
     Ammonia -> ChemicalData(coIceLine, gasFraction * 0.04),
@@ -465,28 +628,170 @@ object ProtoPlanetaryDisk {
     )
 
     val γ: Double = 0.9
-    val surfaceDensityAtSnowLine = ppdSurfaceDensity(Units.au(2.7), diskMass,
-      characteristicRadius, γ)
-    println("sd@sl = " + surfaceDensityAtSnowLine)
 
     //my dust line is a dumbass point at which it's too hot for silicates to form
-    val start = Units.toau(dustLine)
-    val stepau = 0.1
+    val start = AU.au(dustLine)
+    val auFrac = 0.4
+    val seed: Long = 100
+    val random = new Random(seed)
+    //var w = AU(r.nextDouble() * auFrac)
+
+    //var k = start + AU.au(w * 0.5)
+
+
+    val diskSections = ArrayBuffer[DiskSection](
+      SimpleDiskSection(dustLine, characteristicRadius, chemData)
+    )
+
+    var i = 0
+    while(i < 50) {
+      //choose a simple disk section
+      val accretables = diskSections.zipWithIndex.filter(p=>p._1.accretable)
+
+      val (thisAccretable, idx) = accretables(random.nextInt(accretables.size))
+
+      //split into an inner, a protoplanet, and an outer
+
+      //place on disk that we are going to split. actually it should be random
+      val r = (random.nextDouble() * (thisAccretable.r2 - thisAccretable.r1)) + thisAccretable.r1
+
+      //the dust surface density is a summation of anything which is frozen at this point
+      val dust = dustComposition(r, chemData)
+      val cDSD = chemDustSurfaceDensity(r, diskMass, characteristicRadius, γ, chemData, dust)
+      val aggregatedDustSurfaceDensity = cDSD.foldLeft(Units.KGPerM2(0))((b, cSDDatum)=>{ b + cSDDatum._2 })
+
+      //here is a planetesimal. First, attempt to sweep up the full isolation mass
+      val protoPlanetMass = fullIsolationMass(r, solarMass, random.nextDouble(), aggregatedDustSurfaceDensity)
+
+      //that would make a protoplanet with this hill radius
+      val hr = circularHillRadius(r, protoPlanetMass, solarMass)
+
+      //so, make sure that we can actually generate that.
+      val diskSectionsToAccrete = ArrayBuffer[(DiskSection, Int)]((thisAccretable, idx))
+
+      //does it fall off the far edge of this disk?
+      if(hr+r > thisAccretable.r2){
+        var idxNext = idx + 1
+        var allAccretable = true
+        var thisR = thisAccretable.r2
+
+        while(idxNext < diskSections.size && thisR < hr+r){
+          val ds = diskSections(idxNext)
+          if(!ds.accretable) {
+            allAccretable = false
+          } else if(allAccretable) {
+            diskSectionsToAccrete += ((ds, idxNext))
+          }
+          thisR = ds.r2
+          idxNext += 1
+        }
+      }
+
+      //and what about the near edge
+      if(r-hr < thisAccretable.r1){
+        //prev
+        var idxNext = idx - 1
+        var allAccretable = true
+        var thisR = thisAccretable.r1
+        while(idxNext >= 0 && thisR > r-hr){
+          val ds = diskSections(idxNext)
+          if(!ds.accretable) {
+            allAccretable = false
+          } else if(allAccretable) {
+            diskSectionsToAccrete.insert(0, (ds, idxNext))
+          }
+          thisR = ds.r1
+          idxNext -= 1
+        }
+      }
+
+
+      if(diskSectionsToAccrete.size == 1){
+        val (oldDiskSection, oldDiskSectionIdx) = diskSectionsToAccrete(0)
+
+        //if we only found one disk section and it fits neatly into a ring, that's easy. It's a proto planet
+        /*
+        if(hr+r < oldDiskSection.r2 && r-hr > oldDiskSection.r1) {
+          val sd1 = SimpleDiskSection(oldDiskSection.r1, r-hr, chemData)
+          val protoPlanetComposition = dust.map(dcDatum=>{ dcDatum._1 -> dcDatum._2 * protoPlanetMass })
+          val pd1 = new ProtoplanetDiskSection(r-hr, r+hr, r, protoPlanetComposition, solarMass)
+          val sd2 = SimpleDiskSection(r + hr, oldDiskSection.r2, chemData)
+
+          //remove the old one
+          diskSections.remove(oldDiskSectionIdx)
+          //insert the new ones
+          diskSections.insert(oldDiskSectionIdx, sd1, pd1, sd2)
+        } else { */
+          //if it doesn't fit in neatly, that means we are hanging off an edge. We're going to say that it's
+          // planetesimals, because something is disrupting it from forming properly.
+          val (innerSimpleDisk, newR1, planetesimalsInner) = if(r-hr < oldDiskSection.r1)
+            (None, oldDiskSection.r1, true)
+          else
+            (Option(SimpleDiskSection(oldDiskSection.r1, r-hr, chemData)), r-hr, false)
+
+          val (outerSimpleDisk, newR2, planetesimalsOuter) = if(r+hr > oldDiskSection.r2)
+            (None, oldDiskSection.r2, true)
+          else
+            (Option(SimpleDiskSection(r + hr, oldDiskSection.r2, chemData)), r+hr, false)
+
+          val ds = if(planetesimalsInner || planetesimalsOuter){
+            val planetesimalMass = ppIsolationMass(newR1, newR2, aggregatedDustSurfaceDensity)
+            val planetesimalComposition = dust.map(dcDatum=>{ dcDatum._1 -> dcDatum._2 * planetesimalMass })
+            new PlanetesimalDiskSection(newR1, newR2, planetesimalComposition)
+          }
+          else{
+            val protoPlanetComposition = dust.map(dcDatum=>{ dcDatum._1 -> dcDatum._2 * protoPlanetMass })
+            new ProtoplanetDiskSection(newR1, newR2, r, protoPlanetComposition, solarMass)
+          }
+
+        //remove the old one
+        diskSections.remove(oldDiskSectionIdx)
+        //insert the new ones
+        val newDiskSections = (List[DiskSection]() ++ innerSimpleDisk :+ ds) ++ outerSimpleDisk
+        diskSections.insertAll(oldDiskSectionIdx,newDiskSections)
+/*
+        }
+        */
+      } else {
+        println("urgh")
+      }
+
+
+      //now
+      //val cands = pd1.chaoticResonanceCandidates
+      //println("cr cands:")
+      //cands.foreach(x=>println(AU.au(x)))
+
+      /*
+      fullIsolationMass(r, solarMass, random.nextDouble(),
+        ppdDustSurfaceDensity(r, diskMass, characteristicRadius, γ, gasToDustRatio, snowLine))
+        */
+      i += 1
+    }
+
+    diskSections.foreach(
+      diskSection => {
+        println(diskSection)
+
+        diskSection match {
+          case pds: ProtoplanetDiskSection => println("Orbital period: "
+            + Units.toEarthYears(pds.orbitalPeriod) + " years")
+          case _ =>
+        }
+      }
+    )
 
     //generate a bunch of planetesimals (<<0.1 M⊕) and protoplanets (~0.1M⊕)
-    val seed: Long = 100
-    val auFrac = 0.4
-    val r = new Random(seed)
-    var w = r.nextDouble() * auFrac
-    var k = start + w * 0.5
+/*
     var totMass = Units.Kilograms(0)
-    while(k < Units.toau(characteristicRadius * 2.0)) {
-      val a = Units.au(k + w * 0.5)
+    var totRockMass = Units.Kilograms(0)
+    while(k < AU.au(characteristicRadius)) {
+      val a = AU.au(k + w * 0.5)
 
       val composition = chemData.map(t=>{
         val (chem, ChemicalData(iceLine, frac)) = t
         if(a > iceLine)
-          (chem, ppIsolationMass(a, Units.au(w), ppdSurfaceDensity(a, diskMass * frac, characteristicRadius, γ)))
+          (chem, frac * ppIsolationMass(a, AU.au(w), ppdSurfaceDensity(a, diskMass, characteristicRadius, γ)))
         else
           (chem, Kilograms(0))
       })
@@ -494,25 +799,37 @@ object ProtoPlanetaryDisk {
       val p = ProtoPlanet(composition)
 
       val m = p.mass
-      if(a <= Units.au(1.5))
+      totRockMass = totRockMass + p.rockMass
+      if(a <= AU(1.5))
         totMass += m
-      println(k.toString + " au - " + Units.toEarthMasses(m).toString + " M⊕" )
-      k += w
-      w = r.nextDouble() * auFrac
+      println(k.toString + " " + Units.toEarthMasses(m).toString + " M⊕" )
+      k = k + w
+      w = AU(r.nextDouble() * auFrac)
     }
+*/
+    //m - 0.387 au, 0.055 m⊕
+    //v - 0.723 au 0.815 m⊕
+    //e - 1 au 1 m⊕
+    //l - 1 au 0.012 m⊕
+    //m - 1.524 au 0.107 m⊕
+    //a - ? 4<% m 0.00048 m⊕
+    val terrestrialMass = Units.earthMasses(0.055 + 0.815 + 1 + 0.012 + 0.107)
 
-    //m - 0.387 au, 0.055 m(+)
-    //v - 0.723 au 0.815 m(+)
-    //e - 1 au 1 m(+)
-    //l - 1 au 0.012 m(+)
-    //m - 1.524 au 0.107 m(+)
-    //a - ? 4<% m 0.00048 m(+)
-    val terrestrialMass = Units.earthMasses(0.005 + 0.815 + 1 + 0.012 + 0.107)
 
-    //earth, saturn, mars, venus, mercury + jupiter + neptune + uranus - problem is Uranus is 0.55 M(+) rock, 9.3 - 13.5 M(+) ice.
-    val solarsystemSolidMass = Units.earthMasses(1 + (9 + (22-9)/2) + 0.1 + 0.8 + 0.055 + (12 + (45-12)/2) + 1.2 + 0.55)
-    println(totMass / terrestrialMass)
-    println("tm - " + totMass )
+    val solarsystemSolidMass = Units.earthMasses(
+      //earth, saturn,          mars,   venus,  mercury + jupiter +          neptune + uranus - problem is Uranus is 0.55 M⊕ rock, 9.3 - 13.5 M⊕ ice.
+      1 +      (9 + (22-9)/2) + 0.107 + 0.815 + 0.055 +   (12 + (45-12)/2) + 1.2 +     0.55
+        //of course in teh time it took me to write this, there is a hypothetical new planet
+        //how many other people have ever gotten to write that?
+        //nine - nine is >= 10M⊕. Let's go with a uranus style make up
+      + 0.5
+      //hypothetical inner giant
+      + 2
+    )
+
+    //println("totRockMass / solarsystemSolidMass = " + (totRockMass / solarsystemSolidMass).toString)
+    println("hello")
+    //println("tm - " + totMass )
     /*
     val b = Units.au(stepau)
     for(i <- start.to(Units.toau(characteristicRadius), stepau) ) {

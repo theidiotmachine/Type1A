@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ScalaCompilerConfiguration">
+    <option name="implicitConversions" value="true" />
     <option name="optimiseBytecode" value="true" />
     <option name="explainTypeErrors" value="true" />
     <parameters>
       <parameter value="-feature" />
-      <parameter value="-Yinline-warnings" />
+      <parameter value="-deprecation" />
+      <parameter value="-Ywarn-value-discard" />
+      <parameter value="-opt:l:classpath" />
+      <parameter value="-opt:l:method" />
     </parameters>
   </component>
 </project>

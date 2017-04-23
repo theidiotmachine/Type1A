@@ -3,7 +3,7 @@ package typeIa.maths
 import typeIa.maths.Integratables.IntegrationArguments
 
 /**
- * Created by tim on 07/10/15.
+ * Integration object
  */
 object Integrater {
   //[r1-r2] == domain
